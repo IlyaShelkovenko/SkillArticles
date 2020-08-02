@@ -2,11 +2,12 @@ package ru.skillbranch.skillarticles.ui
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.View
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.ImageView
+import androidx.appcompat.widget.SearchView
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.Toolbar
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_root.*
@@ -23,13 +24,24 @@ class RootActivity : AppCompatActivity() {
 
     private lateinit var viewModel: ArticleViewModel
 
+    private lateinit var mSearchView : SearchView
+    private var mSearchItem : MenuItem? = null
+    private var searchQuery : String? = null
+    private var isSearchExpanded = false
+
+    private val SEARCH_TEXT_KEY = "search_query"
+    private val SEARCH_EXPAND_KEY = "search_expand"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_root)
         setupToolbar()
         setupBottombar()
         setupSubmenu()
-
+        if (savedInstanceState != null) {
+            searchQuery = savedInstanceState.getString(SEARCH_TEXT_KEY);
+            isSearchExpanded = savedInstanceState.getBoolean(SEARCH_EXPAND_KEY);
+        }
         val vmFactory = ViewModelFactory("0")
         viewModel = ViewModelProviders.of(this,vmFactory).get(ArticleViewModel::class.java)
         viewModel.observeState(this){
@@ -39,6 +51,47 @@ class RootActivity : AppCompatActivity() {
             renderNotification(it)
         }
     }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        if (mSearchView != null) {
+            searchQuery = mSearchView.query.toString();
+            searchQuery?.let {
+                if (it.isNotEmpty()) {
+                    outState.putString(SEARCH_TEXT_KEY, searchQuery);
+                }
+            }
+        }
+        mSearchItem?.let {
+            if(it.isActionViewExpanded)
+                outState.putBoolean(SEARCH_EXPAND_KEY, true);
+        }
+        super.onSaveInstanceState(outState)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_search, menu)
+        mSearchItem = menu?.findItem(R.id.action_search)
+        mSearchView = mSearchItem?.actionView as SearchView
+        mSearchView.queryHint = "Search"
+
+        if(isSearchExpanded){
+            mSearchItem?.expandActionView()
+        }
+        if(searchQuery != null) {
+            mSearchView.setQuery(searchQuery, true)
+        }
+        mSearchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener{
+            override fun onQueryTextSubmit(query: String): Boolean {
+                return true
+            }
+            override fun onQueryTextChange(newText: String): Boolean {
+                searchQuery = newText
+                return true
+            }
+        })
+        return super.onCreateOptionsMenu(menu)
+    }
+
 
     private fun renderNotification(notify: Notify) {
         val snackbar = Snackbar.make(coordinator_container, notify.message, Snackbar.LENGTH_LONG)
