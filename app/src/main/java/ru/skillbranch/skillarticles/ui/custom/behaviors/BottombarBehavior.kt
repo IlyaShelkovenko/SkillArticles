@@ -1,7 +1,3 @@
-/**
- * Created by Ilia Shelkovenko on 01.08.2020.
- */
-
 package ru.skillbranch.skillarticles.ui.custom.behaviors
 
 import android.content.Context

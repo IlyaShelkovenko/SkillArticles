@@ -1,18 +1,14 @@
-/**
- * Created by Ilia Shelkovenko on 01.08.2020.
- */
-
 package ru.skillbranch.skillarticles.ui.custom.behaviors
 
 import android.util.Log
 import android.view.View
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.core.view.ViewCompat
 import androidx.core.view.marginRight
 import ru.skillbranch.skillarticles.ui.custom.ArticleSubmenu
 import ru.skillbranch.skillarticles.ui.custom.Bottombar
 
 class SubmenuBehavior : CoordinatorLayout.Behavior<ArticleSubmenu>() {
+
     override fun layoutDependsOn(
         parent: CoordinatorLayout,
         child: ArticleSubmenu,
@@ -26,16 +22,15 @@ class SubmenuBehavior : CoordinatorLayout.Behavior<ArticleSubmenu>() {
         child: ArticleSubmenu,
         dependency: View
     ): Boolean {
-        return if(child.isOpen && dependency is Bottombar && dependency.translationY >= 0){
-            animate(child,dependency)
+        return if (child.isOpen && dependency is Bottombar && dependency.translationY >= 0) {
+            animate(child, dependency)
             true
-        }else
-            false
-
+        } else false
     }
-}
 
-private fun animate(child: View, dependency: Bottombar){
-    val fraction = dependency.translationY/dependency.minHeight
-    child.translationX = (child.width + child.marginRight) * fraction
+    private fun animate(child: ArticleSubmenu, dependency: Bottombar) {
+        val fraction = dependency.translationY / dependency.minHeight
+        child.translationX = (child.width + child.marginRight) * fraction
+        Log.e("SubmenuBehavior", " fraction : $fraction  translationX: ${child.translationX}");
+    }
 }
