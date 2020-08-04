@@ -14,7 +14,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 
-class BottombarBehavior : CoordinatorLayout.Behavior<Bottombar>() {
+class BottombarBehavior() : CoordinatorLayout.Behavior<Bottombar>() {
+    constructor(ctx:Context, attrs: AttributeSet) : this()
     override fun onStartNestedScroll(
         coordinatorLayout: CoordinatorLayout,
         child: Bottombar,
@@ -38,6 +39,4 @@ class BottombarBehavior : CoordinatorLayout.Behavior<Bottombar>() {
         child.translationY = MathUtils.clamp(child.translationY + dy, 0f, child.minHeight.toFloat())
         super.onNestedPreScroll(coordinatorLayout, child, target, dx, dy, consumed, type)
     }
-
-
 }
