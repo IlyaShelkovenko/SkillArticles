@@ -9,8 +9,8 @@ import androidx.core.view.marginRight
 import ru.skillbranch.skillarticles.ui.custom.ArticleSubmenu
 import ru.skillbranch.skillarticles.ui.custom.Bottombar
 
-class SubmenuBehavior() : CoordinatorLayout.Behavior<ArticleSubmenu>() {
-    constructor(ctx: Context, attrs: AttributeSet) : this()
+class SubmenuBehavior : CoordinatorLayout.Behavior<ArticleSubmenu>() {
+
     override fun layoutDependsOn(
         parent: CoordinatorLayout,
         child: ArticleSubmenu,
