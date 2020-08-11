@@ -116,14 +116,19 @@ class ArticleViewModel(private val articleId: String) : BaseViewModel<ArticleSta
     }
 
     override fun handleSearchMode(isSearch: Boolean) {
-        TODO("Not yet implemented")
+        updateState {
+            it.copy(isSearch = isSearch)
+        }
     }
 
     override fun handleSearch(query: String?) {
-        TODO("Not yet implemented")
+        updateState {
+            it.copy(searchQuery = query)
+        }
     }
 
-
+    fun getSearchMode() : Boolean = state.value?.isSearch ?: false
+    fun getSearchQuery() : String = state.value?.searchQuery ?: ""
 }
 
 data class ArticleState(

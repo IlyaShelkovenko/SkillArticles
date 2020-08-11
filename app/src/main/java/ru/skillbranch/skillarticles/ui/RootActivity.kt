@@ -1,5 +1,6 @@
 package ru.skillbranch.skillarticles.ui
 
+import android.app.ActionBar
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
@@ -26,11 +27,11 @@ class RootActivity : AppCompatActivity() {
 
     private lateinit var mSearchView : SearchView
     private var mSearchItem : MenuItem? = null
-    private var searchQuery : String? = null
+    /*private var searchQuery : String? = null
     private var isSearchExpanded = false
 
     private val SEARCH_TEXT_KEY = "search_query"
-    private val SEARCH_EXPAND_KEY = "search_expand"
+    private val SEARCH_EXPAND_KEY = "search_expand"*/
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,10 +39,10 @@ class RootActivity : AppCompatActivity() {
         setupToolbar()
         setupBottombar()
         setupSubmenu()
-        if (savedInstanceState != null) {
+        /*if (savedInstanceState != null) {
             searchQuery = savedInstanceState.getString(SEARCH_TEXT_KEY);
             isSearchExpanded = savedInstanceState.getBoolean(SEARCH_EXPAND_KEY);
-        }
+        }*/
         val vmFactory = ViewModelFactory("0")
         viewModel = ViewModelProviders.of(this,vmFactory).get(ArticleViewModel::class.java)
         viewModel.observeState(this){
@@ -52,7 +53,12 @@ class RootActivity : AppCompatActivity() {
         }
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
+    override fun onStop() {
+        viewModel.handleSearchMode(mSearchItem?.isActionViewExpanded ?: false)
+        super.onStop()
+    }
+
+    /*override fun onSaveInstanceState(outState: Bundle) {
         if (mSearchView != null) {
             searchQuery = mSearchView.query.toString();
             searchQuery?.let {
@@ -66,26 +72,33 @@ class RootActivity : AppCompatActivity() {
                 outState.putBoolean(SEARCH_EXPAND_KEY, true);
         }
         super.onSaveInstanceState(outState)
-    }
+    }*/
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_search, menu)
         mSearchItem = menu?.findItem(R.id.action_search)
         mSearchView = mSearchItem?.actionView as SearchView
-        mSearchView.queryHint = "Search"
+        mSearchView.apply {
+            queryHint = "Search"
+            maxWidth = Int.MAX_VALUE
+        }
 
-        if(isSearchExpanded){
+        if(viewModel.getSearchMode()) {
+            mSearchItem?.expandActionView()
+            mSearchView.setQuery(viewModel.getSearchQuery(),true)
+        }
+        /*if(isSearchExpanded){
             mSearchItem?.expandActionView()
         }
         if(searchQuery != null) {
             mSearchView.setQuery(searchQuery, true)
-        }
+        }*/
         mSearchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener{
             override fun onQueryTextSubmit(query: String): Boolean {
                 return true
             }
             override fun onQueryTextChange(newText: String): Boolean {
-                searchQuery = newText
+                viewModel.handleSearch(newText)
                 return true
             }
         })
