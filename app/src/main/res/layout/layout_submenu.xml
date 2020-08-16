@@ -65,7 +65,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Темный режим"
+        android:text="@string/str_darkMode_res"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/divider_h"
         app:layout_constraintBottom_toBottomOf="parent"

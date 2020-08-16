@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Skill Articles</string>
+    <string name="str_search_res">Search</string>
+    <string name="str_darkMode_res">Dark mode</string>
+    <string name="str_search_tint">Search</string>
+    <string name="str_loading_res">Loading...</string>
+    <string name="str_not_found_res">Not found</string>
+    <string name="str_of_res">of</string>
 </resources>
