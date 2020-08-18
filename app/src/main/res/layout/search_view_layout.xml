@@ -5,5 +5,4 @@
         android:layout_height="wrap_content"
         android:inputType="text"
         android:maxWidth="9999dp">
-
 </androidx.appcompat.widget.SearchView>
