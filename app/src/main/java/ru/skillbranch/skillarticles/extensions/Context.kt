@@ -1,10 +1,13 @@
 package ru.skillbranch.skillarticles.extensions
 
+import android.app.Activity
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.util.TypedValue
+import android.view.View
+import android.view.inputmethod.InputMethodManager
 import androidx.annotation.AttrRes
 
 fun Context.dpToPx(dp: Int): Float {
@@ -42,4 +45,9 @@ val Context.isNetworkAvailable: Boolean
 fun Context.attrValue(@AttrRes attr: Int, typedValue: TypedValue = TypedValue()): Int {
     theme.resolveAttribute(attr, typedValue, true)
     return typedValue.data
+}
+
+fun Context.hideKeyboard(view: View){
+    val imm = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+    imm.hideSoftInputFromWindow(view.windowToken, 0)
 }
