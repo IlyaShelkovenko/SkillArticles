@@ -10,6 +10,7 @@ import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.text.Layout
 import android.text.Spanned
+import androidx.annotation.VisibleForTesting
 import androidx.core.graphics.ColorUtils
 import androidx.core.text.getSpans
 import ru.skillbranch.skillarticles.R
@@ -18,10 +19,20 @@ import ru.skillbranch.skillarticles.ui.custom.spans.HeaderSpan
 import ru.skillbranch.skillarticles.ui.custom.spans.SearchFocusSpan
 import ru.skillbranch.skillarticles.ui.custom.spans.SearchSpan
 
+@VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
 class SearchBgHelper(
     context: Context,
-    private val focusListener: (Int, Int) -> Unit
+    private val focusListener: ((Int, Int) -> Unit)? = null,
+    mockDrawable : Drawable? = null
 ) {
+
+    @VisibleForTesting
+    constructor(context: Context, focusListener: ((Int, Int) -> Unit)): this(
+        context,
+        focusListener,
+        null
+    )
+
     private val padding: Int = context.dpToIntPx(4)
     private val radius: Float = context.dpToPx(8)
     private val borderWidth: Int = context.dpToIntPx(1)
@@ -85,7 +96,10 @@ class SearchBgHelper(
     private var topExtraPadding: Int = 0
     private var bottomExtraPadding: Int = 0
     private lateinit var render: SearchBgRender
-    private val singleLineRender: SearchBgRender by lazy {
+
+    private val singleLineRender = SingleLineRender(padding, mockDrawable ?: drawable)
+    private val multiLineRender = MultiLineRender(padding, mockDrawable ?: drawableLeft, mockDrawable ?: drawableMiddle, mockDrawable ?: drawableRight)
+    /*private val singleLineRender: SearchBgRender by lazy {
         SingleLineRender(
             padding, drawable
         )
@@ -97,7 +111,7 @@ class SearchBgHelper(
             drawableMiddle,
             drawableRight
         )
-    }
+    }*/
 
     fun draw(canvas: Canvas, text: Spanned, layout: Layout) {
         spans = text.getSpans()
@@ -108,7 +122,7 @@ class SearchBgHelper(
             endLine = layout.getLineForOffset(spanEnd)
 
             if(it is SearchFocusSpan){
-                focusListener.invoke(layout.getLineTop(startLine), layout.getLineBottom(startLine))
+                focusListener?.invoke(layout.getLineTop(startLine), layout.getLineBottom(startLine))
             }
 
             headerSpans = text.getSpans(spanStart, spanEnd, HeaderSpan::class.java)

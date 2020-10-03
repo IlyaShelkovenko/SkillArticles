@@ -3,7 +3,10 @@ package ru.skillbranch.skillarticles.ui.custom.markdown
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
+import android.os.Parcel
+import android.os.Parcelable
 import android.text.Spannable
+import android.util.SparseArray
 import android.view.*
 import android.widget.ImageView
 import android.widget.TextView
@@ -147,6 +150,7 @@ class MarkdownImageView private constructor(
             if (tv_alt?.isVisible == true) animateHideAlt()
             else animateShowAlt()
         }
+       // isSaveEnabled = true
     }
 
 
@@ -239,6 +243,49 @@ class MarkdownImageView private constructor(
         va.doOnEnd { tv_alt?.isVisible = false }
         va.start()
     }
+
+    override fun onSaveInstanceState(): Parcelable? {
+        val mySavedState = SavedState(super.onSaveInstanceState())
+        mySavedState.ssIsAltVisible = tv_alt?.isVisible ?: false
+        return mySavedState
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        if (state is SavedState) {
+            tv_alt?.isVisible = state.ssIsAltVisible
+        }
+        super.onRestoreInstanceState(state)
+    }
+
+
+    private class SavedState : BaseSavedState, Parcelable {
+        var ssIsAltVisible : Boolean = false
+        constructor(superState: Parcelable?) : super(superState)
+        constructor(src: Parcel) : super(src){
+            ssIsAltVisible = src.readInt() == 1
+        }
+
+        override fun writeToParcel(out: Parcel?, flags: Int) {
+            super.writeToParcel(out, flags)
+            out?.writeInt( if(ssIsAltVisible) 1 else 0)
+        }
+
+        override fun describeContents() = 0
+
+        companion object CREATOR : Parcelable.Creator<SavedState> {
+            override fun createFromParcel(source: Parcel) = SavedState(source)
+            override fun newArray(size: Int): Array<SavedState?> = arrayOfNulls(size)
+
+        }
+    }
+
+    override fun dispatchSaveInstanceState(container: SparseArray<Parcelable>) {
+        dispatchFreezeSelfOnly(container)
+    }
+
+    override fun dispatchRestoreInstanceState(container: SparseArray<Parcelable>) {
+        dispatchThawSelfOnly(container)
+    }
 }
 
 class AspectRatioResizeTransform : BitmapTransformation() {
@@ -265,8 +312,8 @@ class AspectRatioResizeTransform : BitmapTransformation() {
             true
         )
     }
-
     override fun equals(other: Any?): Boolean = other is AspectRatioResizeTransform
 
     override fun hashCode(): Int = ID.hashCode()
+
 }
