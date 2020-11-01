@@ -6,4 +6,8 @@
     <string name="str_loading_res">Loading...</string>
     <string name="str_not_found_res">Not found</string>
     <string name="str_of_res">of</string>
+    <string name="title_articles">Articles</string>
+    <string name="title_bookmarks">Bookmarks</string>
+    <string name="title_transcriptions">Transcriptions</string>
+    <string name="title_profile">Profile</string>
 </resources>

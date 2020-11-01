@@ -87,6 +87,8 @@ class MarkdownImageView private constructor(
         strokeWidth = 0f
     }
 
+    private var aspectRatio = 0f
+
     init {
         layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
         iv_image = ImageView(context).apply {
@@ -153,6 +155,15 @@ class MarkdownImageView private constructor(
        // isSaveEnabled = true
     }
 
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        Glide
+            .with(context)
+            .load(imageUrl)
+            .transform(AspectRatioResizeTransform())
+            .into(iv_image)
+
+    }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)
     public override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -161,7 +172,12 @@ class MarkdownImageView private constructor(
 
         val ms = MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY)
 
-        iv_image.measure(ms, heightMeasureSpec)
+        if(aspectRatio != 0f){
+            val hms = MeasureSpec.makeMeasureSpec((width/aspectRatio).toInt(), MeasureSpec.EXACTLY)
+            iv_image.measure(ms, hms)
+        } else
+            iv_image.measure(ms, heightMeasureSpec)
+
         tv_title.measure(ms, heightMeasureSpec)
         tv_alt?.measure(ms, heightMeasureSpec)
 
@@ -247,12 +263,14 @@ class MarkdownImageView private constructor(
     override fun onSaveInstanceState(): Parcelable? {
         val mySavedState = SavedState(super.onSaveInstanceState())
         mySavedState.ssIsAltVisible = tv_alt?.isVisible ?: false
+        mySavedState.ssAspectRatio = (iv_image.width.toFloat() / iv_image.height)
         return mySavedState
     }
 
     override fun onRestoreInstanceState(state: Parcelable?) {
         if (state is SavedState) {
             tv_alt?.isVisible = state.ssIsAltVisible
+            aspectRatio = state.ssAspectRatio
         }
         super.onRestoreInstanceState(state)
     }
@@ -260,14 +278,19 @@ class MarkdownImageView private constructor(
 
     private class SavedState : BaseSavedState, Parcelable {
         var ssIsAltVisible : Boolean = false
+        var ssAspectRatio : Float = 0f
+
         constructor(superState: Parcelable?) : super(superState)
+
         constructor(src: Parcel) : super(src){
             ssIsAltVisible = src.readInt() == 1
+            ssAspectRatio = src.readFloat()
         }
 
-        override fun writeToParcel(out: Parcel?, flags: Int) {
+        override fun writeToParcel(out: Parcel, flags: Int) {
             super.writeToParcel(out, flags)
-            out?.writeInt( if(ssIsAltVisible) 1 else 0)
+            out.writeInt( if(ssIsAltVisible) 1 else 0)
+            out.writeFloat(ssAspectRatio)
         }
 
         override fun describeContents() = 0
