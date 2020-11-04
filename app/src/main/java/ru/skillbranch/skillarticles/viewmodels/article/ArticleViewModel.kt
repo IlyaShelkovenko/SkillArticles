@@ -17,6 +17,7 @@ import ru.skillbranch.skillarticles.extensions.indexesOf
 import ru.skillbranch.skillarticles.data.repositories.clearContent
 import ru.skillbranch.skillarticles.viewmodels.base.BaseViewModel
 import ru.skillbranch.skillarticles.viewmodels.base.IViewModelState
+import ru.skillbranch.skillarticles.viewmodels.base.NavigationCommand
 import ru.skillbranch.skillarticles.viewmodels.base.Notify
 
 class ArticleViewModel(
@@ -60,6 +61,9 @@ class ArticleViewModel(
                 isDarkMode = settings.isDarkMode,
                 isBigText = settings.isBigText
             )
+        }
+        subscribeOnDataSource(repository.isAuth()) {auth, state ->
+            state.copy(isAuth = auth)
         }
     }
 
@@ -141,16 +145,20 @@ class ArticleViewModel(
         }
     }
 
-    fun handleUpResult() {
+    override fun handleUpResult() {
         updateState { it.copy(searchPosition = it.searchPosition.dec()) }
     }
 
-    fun handleDownResult() {
+    override fun handleDownResult() {
         updateState { it.copy(searchPosition = it.searchPosition.inc()) }
     }
 
-    fun handleCopyCode(){
+    override fun handleCopyCode(){
         notify(Notify.TextMessage("Copy code to clipboard"))
+    }
+
+    override fun handleSendComment() {
+        if(!currentState.isAuth) navigate(NavigationCommand.StartLogin())
     }
 
 }

@@ -9,7 +9,8 @@ import androidx.core.view.marginRight
 import ru.skillbranch.skillarticles.ui.custom.ArticleSubmenu
 import ru.skillbranch.skillarticles.ui.custom.Bottombar
 
-class SubmenuBehavior : CoordinatorLayout.Behavior<ArticleSubmenu>() {
+class SubmenuBehavior(): CoordinatorLayout.Behavior<ArticleSubmenu>() {
+    constructor(context: Context, attrs: AttributeSet): this()
 
     override fun layoutDependsOn(
         parent: CoordinatorLayout,
@@ -24,15 +25,15 @@ class SubmenuBehavior : CoordinatorLayout.Behavior<ArticleSubmenu>() {
         child: ArticleSubmenu,
         dependency: View
     ): Boolean {
-        return if (child.isOpen && dependency is Bottombar && dependency.translationY >= 0) {
+        return if(child.isOpen && dependency.translationY >= 0.0f) { // Если меню открыто - то по движению сдвигаем вправо
             animate(child, dependency)
             true
         } else false
     }
 
-    private fun animate(child: ArticleSubmenu, dependency: Bottombar) {
-        val fraction = dependency.translationY / dependency.minHeight
-        child.translationX = (child.width + child.marginRight) * fraction
-        Log.e("SubmenuBehavior", " fraction : $fraction  translationX: ${child.translationX}");
+    private fun animate(child: View, dependency: View) {
+        val fraction = dependency.translationY / dependency.height
+        child.translationX = ( child.width + child.marginRight) * fraction
     }
+
 }

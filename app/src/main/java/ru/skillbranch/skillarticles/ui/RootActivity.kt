@@ -7,15 +7,17 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_root.*
+import kotlinx.android.synthetic.main.layout_bottombar.*
 import ru.skillbranch.skillarticles.R
 import ru.skillbranch.skillarticles.ui.base.BaseActivity
 import ru.skillbranch.skillarticles.viewmodels.RootViewModel
 import ru.skillbranch.skillarticles.viewmodels.base.IViewModelState
+import ru.skillbranch.skillarticles.viewmodels.base.NavigationCommand
 import ru.skillbranch.skillarticles.viewmodels.base.Notify
 
 class RootActivity : BaseActivity<RootViewModel>() {
     override val layout: Int = R.layout.activity_root
-    override val viewModel: RootViewModel by viewModels()
+    public override val viewModel: RootViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,12 +31,22 @@ class RootActivity : BaseActivity<RootViewModel>() {
         )
 
         setupActionBarWithNavController(navController, appbarConfiguration)
-        nav_view.setupWithNavController(navController)
+        //nav_view.setupWithNavController(navController)
+        nav_view.setOnNavigationItemSelectedListener {
+            viewModel.navigate(NavigationCommand.To(it.itemId))
+            true
+        }
+
+        navController.addOnDestinationChangedListener { controller, destination, arguments ->
+            //nav_view.selectDestination(destination)
+        }
     }
 
     override fun renderNotification(notify: Notify) {
-        val snackbar = Snackbar.make(coordinator_container, notify.message, Snackbar.LENGTH_LONG)
-        //    .setAnchorView(bottombar)
+        val snackbar = Snackbar.make(container, notify.message, Snackbar.LENGTH_LONG)
+
+        if(bottombar != null) snackbar.anchorView = bottombar
+        else snackbar.anchorView = nav_view
 
         when (notify) {
             is Notify.TextMessage -> {

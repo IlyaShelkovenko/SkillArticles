@@ -23,8 +23,8 @@ class RenderProp<T : Any>(
         thisRef: Binding,
         prop: KProperty<*>
     ) :ReadWriteProperty<Binding, T> {
-        val delegate = RenderProp(value, true, onChange)
-        registerDeleagate(thisRef, prop.name, delegate)
+        val delegate = RenderProp(value, needInit, onChange)
+        registerDelegate(thisRef, prop.name, delegate)
         return delegate
     }
     override fun getValue(thisRef: Binding, property: KProperty<*>): T = value
@@ -39,7 +39,7 @@ class RenderProp<T : Any>(
         listeners.add(listener)
     }
 
-    private fun registerDeleagate(thisRef: Binding,name: String, delegate: RenderProp<T>) {
+    private fun registerDelegate(thisRef: Binding, name: String, delegate: RenderProp<T>) {
         thisRef.delegates[name] = delegate
     }
 
