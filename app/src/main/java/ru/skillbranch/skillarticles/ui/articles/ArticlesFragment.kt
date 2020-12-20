@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.fragment_articles.*
 
 import ru.skillbranch.skillarticles.R
-import ru.skillbranch.skillarticles.data.ArticleItemData
+import ru.skillbranch.skillarticles.data.models.ArticleItemData
 import ru.skillbranch.skillarticles.ui.base.BaseFragment
 import ru.skillbranch.skillarticles.ui.base.Binding
 import ru.skillbranch.skillarticles.ui.delegates.RenderProp
@@ -26,9 +26,9 @@ class ArticlesFragment : BaseFragment<ArticlesViewModel>() {
 
     override val viewModel: ArticlesViewModel by viewModels()
     override val layout: Int = R.layout.fragment_articles
-    override val binding: ArticlesBinding by lazy {ArticlesBinding()}
+    override val binding: ArticlesBinding by lazy { ArticlesBinding() }
 
-    private val articlesAdapter = ArticlesAdapter {item ->
+    private val articlesAdapter = ArticlesAdapter { item ->
         val action = ArticlesFragmentDirections.actionNavArticlesToPageArticle(
             item.id,
             item.author,
@@ -43,22 +43,33 @@ class ArticlesFragment : BaseFragment<ArticlesViewModel>() {
     }
 
     override fun setupViews() {
-        with(rv_articles){
+        with(rv_articles) {
             layoutManager = LinearLayoutManager(context)
             adapter = articlesAdapter
             addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.VERTICAL))
         }
+
+        viewModel.observeList(viewLifecycleOwner){
+            articlesAdapter.submitList(it)
+        }
     }
 
-    inner class ArticlesBinding: Binding() {
+    inner class ArticlesBinding : Binding() {
 
-        private var articles : List<ArticleItemData> by RenderProp(emptyList()){
-            articlesAdapter.submitList(it)
+        val isFocusedSearch: Boolean = false
+        var searchQuery : String? = null
+        var isSearch: Boolean = false
+        var isLoading: Boolean by RenderProp(true){
+            //TODO show shimer on rv_list
         }
         override fun bind(data: IViewModelState) {
             data as ArticlesState
-            articles = data.articles
+            isSearch = data.isSearch
+            searchQuery = data.searchQuery
+            isLoading = data.isLoading
         }
+
+        //TODO save UI
     }
 
 }
