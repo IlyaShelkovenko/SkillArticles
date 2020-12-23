@@ -17,7 +17,7 @@ import ru.skillbranch.skillarticles.data.models.CommentItemData
 import ru.skillbranch.skillarticles.extensions.*
 import kotlin.math.min
 
-/*
+
 class CommentItemView(context: Context) : ViewGroup(context, null, 0) {
     private val defaultVSpace = context.dpToIntPx(8)
     private val defaultHSpace = context.dpToIntPx(16)
@@ -198,4 +198,4 @@ class CommentItemView(context: Context) : ViewGroup(context, null, 0) {
         }
     }
 
-}*/
+}

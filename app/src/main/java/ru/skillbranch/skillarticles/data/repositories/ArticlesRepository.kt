@@ -6,20 +6,52 @@ import androidx.paging.DataSource
 import androidx.paging.PositionalDataSource
 import ru.skillbranch.skillarticles.data.models.ArticleItemData
 import ru.skillbranch.skillarticles.data.LocalDataHolder
+import ru.skillbranch.skillarticles.data.NetworkDataHolder
+import java.lang.Thread.sleep
 
 
 object ArticlesRepository {
 
     private val local = LocalDataHolder
+    private val network = NetworkDataHolder
 
-    fun allArticles(): ArticleDataFactory = ArticleDataFactory(ArticleStrategy.AllArticles(::findArticlesByRange))
+    fun allArticles(): ArticleDataFactory =
+        ArticleDataFactory(ArticleStrategy.AllArticles(::findArticlesByRange))
+
+    fun searchArticles(searchQuery: String) =
+        ArticleDataFactory(ArticleStrategy.SearchArticle(::searchArticlesByTitle, searchQuery))
+
 
     private fun findArticlesByRange(start: Int, size: Int) = local.localArticleItems
         .drop(start)
         .take(size)
+
+    private fun searchArticlesByTitle(start: Int, size: Int, queryTitle: String) = local.localArticleItems
+        .asSequence()
+        .filter{it.title.contains(queryTitle, true)}
+        .drop(start)
+        .take(size)
+        .toList()
+
+    fun loadArticlesFromNetwork(start: Int, size: Int) : List<ArticleItemData> =
+        network.networkArticleItems
+            .drop(start)
+            .take(size)
+            .apply {
+                sleep(500)
+            }
+
+
+    fun insertArticlesToDb(articles: List<ArticleItemData>) {
+        local.localArticleItems.addAll(articles)
+            .apply {
+            sleep(500)
+        }
+    }
+
 }
 
-class ArticleDataFactory(private val strategy : ArticleStrategy) :
+class ArticleDataFactory(val strategy : ArticleStrategy) :
     DataSource.Factory<Int, ArticleItemData>() {
     override fun create(): DataSource<Int, ArticleItemData> = ArticleDataSource(strategy)
 
