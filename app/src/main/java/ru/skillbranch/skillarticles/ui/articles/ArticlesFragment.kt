@@ -36,8 +36,12 @@ class ArticlesFragment : BaseFragment<ArticlesViewModel>() {
         )
     }
 
+    private val handleToggleBookmark = { articleId: String, isBookmark: Boolean ->
+        viewModel.handleToggleBookmark(articleId, isBookmark)
+    }
 
-    private val articlesAdapter = ArticlesAdapter { item ->
+
+    private val articlesAdapter = ArticlesAdapter( { item ->
         val action = ArticlesFragmentDirections.actionNavArticlesToPageArticle(
             item.id,
             item.author,
@@ -48,8 +52,9 @@ class ArticlesFragment : BaseFragment<ArticlesViewModel>() {
             item.poster,
             item.title
         )
-        viewModel.navigate(NavigationCommand.To(action.actionId, action.arguments))
-    }
+        viewModel.navigate(NavigationCommand.To(action.actionId, action.arguments))},
+        handleToggleBookmark
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

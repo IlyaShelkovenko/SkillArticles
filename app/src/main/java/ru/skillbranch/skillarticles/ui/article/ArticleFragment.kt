@@ -288,6 +288,9 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView{
         private var answerTo by RenderProp("Comment"){
             wrap_comments.hint = it
         }
+        private var commentText by RenderProp(""){
+            et_comment.setText(it)
+        }
         private var isShowBottombar by RenderProp(true){
             if(it) bottombar.show() else  bottombar.hide()
             if(submenu.isOpen) submenu.isVisible = it
@@ -329,14 +332,17 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView{
             searchResults = data.searchResults
             answerTo = data.answerTo ?: "Comment"
             isShowBottombar = data.showBottomBar
+            commentText = data.comment ?: ""
         }
 
         override fun saveUi(outState: Bundle) {
             outState.putBoolean(::isFocusedSearch.name, search_view?.hasFocus() ?: false)
+            //outState.putString(::commentText.name, et_comment.text.toString())
         }
 
         override fun restoreUi(savedState: Bundle?) {
             isFocusedSearch = savedState?.getBoolean(::isFocusedSearch.name) ?: false
+            //commentText = savedState?.getString(::commentText.name) ?: ""
         }
     }
 

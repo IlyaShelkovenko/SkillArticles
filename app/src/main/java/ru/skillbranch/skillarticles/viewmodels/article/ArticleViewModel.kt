@@ -172,13 +172,18 @@ class ArticleViewModel(
     }
 
     override fun handleSendComment(comment: String) {
-        if(!currentState.isAuth) navigate(NavigationCommand.StartLogin())
-        viewModelScope.launch {
-            repository.sendComment(articleId, comment, currentState.answerToSlug)
-            withContext(Dispatchers.Main){
-                updateState { it.copy(answerTo = null, answerToSlug = null) }
+        if (!currentState.isAuth) {
+            updateState { it.copy(comment = comment) }
+            navigate(NavigationCommand.StartLogin())
+        } else {
+            viewModelScope.launch {
+                repository.sendComment(articleId, comment, currentState.answerToSlug)
+                withContext(Dispatchers.Main) {
+                    updateState { it.copy(answerTo = null, answerToSlug = null, comment = null) }
+                }
             }
         }
+
     }
 
     fun observeList(
@@ -237,6 +242,7 @@ data class ArticleState(
     val author: Any? = null,
     val poster: String? = null,
     val content: List<MarkdownElement> = emptyList(),
+    val comment: String? = null,
     val commentsCount: Int = 0,
     val answerTo: String? = null,
     val answerToSlug: String? = null,
@@ -244,21 +250,25 @@ data class ArticleState(
 ) : IViewModelState {
 
     override fun save(outState: SavedStateHandle) {
-
-        //TODO save state
         outState.set("isSearch" , isSearch)
         outState.set("searchQuery", searchQuery)
         outState.set("searchResults", searchResults)
         outState.set("searchPosition", searchPosition)
+        outState.set("comment", comment)
+        outState.set("answerTo", answerTo)
+        outState.set("answerToSlug", answerToSlug)
+
     }
 
     override fun restore(savedState: SavedStateHandle): IViewModelState {
-        //TODO save state
         return copy(
             isSearch = savedState["isSearch"] ?: false,
             searchQuery = savedState["searchQuery"],
             searchResults =  savedState["searchResults"] ?: emptyList(),
-            searchPosition = savedState["searchPosition"] ?: 0
+            searchPosition = savedState["searchPosition"] ?: 0,
+            comment = savedState["comment"],
+            answerTo = savedState["answerTo"],
+            answerToSlug = savedState["answerToSlug"]
         )
     }
 }
