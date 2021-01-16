@@ -12,6 +12,7 @@ import ru.skillbranch.skillarticles.R
 import ru.skillbranch.skillarticles.extensions.selectDestination
 import ru.skillbranch.skillarticles.ui.base.BaseActivity
 import ru.skillbranch.skillarticles.ui.custom.Bottombar
+import ru.skillbranch.skillarticles.viewmodels.RootState
 import ru.skillbranch.skillarticles.viewmodels.RootViewModel
 import ru.skillbranch.skillarticles.viewmodels.base.IViewModelState
 import ru.skillbranch.skillarticles.viewmodels.base.NavigationCommand
@@ -20,6 +21,7 @@ import ru.skillbranch.skillarticles.viewmodels.base.Notify
 class RootActivity : BaseActivity<RootViewModel>() {
     override val layout: Int = R.layout.activity_root
     public override val viewModel: RootViewModel by viewModels()
+    private var isAuth = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,7 +44,7 @@ class RootActivity : BaseActivity<RootViewModel>() {
         navController.addOnDestinationChangedListener { controller, destination, arguments ->
             nav_view.selectDestination(destination)
 
-            if (viewModel.currentState.isAuth && destination.id == R.id.nav_auth) {
+            if (isAuth && destination.id == R.id.nav_auth) {
                 controller.popBackStack()
                 val privateDestination = arguments?.get("private_destination") as Int?
                 privateDestination?.let { controller.navigate(it) }
@@ -82,7 +84,7 @@ class RootActivity : BaseActivity<RootViewModel>() {
     }
 
     override fun subscribeOnState(state: IViewModelState) {
-        
+        isAuth = (state as RootState).isAuth
     }
 
 
