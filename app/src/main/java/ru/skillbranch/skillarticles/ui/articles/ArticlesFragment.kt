@@ -4,7 +4,9 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.widget.SearchView
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.fragment_articles.*
@@ -21,9 +23,10 @@ import ru.skillbranch.skillarticles.viewmodels.base.NavigationCommand
 
 class ArticlesFragment : BaseFragment<ArticlesViewModel>() {
 
-    override val viewModel: ArticlesViewModel by viewModels()
+    override val viewModel: ArticlesViewModel by activityViewModels()
     override val layout: Int = R.layout.fragment_articles
     override val binding: ArticlesBinding by lazy { ArticlesBinding() }
+    private val args: ArticlesFragmentArgs by navArgs()
 
     override val prepareToolbar: (ToolbarBuilder.() -> Unit)? = {
         addMenuItem(
@@ -36,7 +39,24 @@ class ArticlesFragment : BaseFragment<ArticlesViewModel>() {
         )
     }
 
-    private val handleToggleBookmark = { articleId: String, isBookmark: Boolean ->
+    private val articlesAdapter = ArticlesAdapter { item, isToggleBookmark ->
+        if(isToggleBookmark){
+            viewModel.handleToggleBookmark(item.id)
+        }else {
+            val action = ArticlesFragmentDirections.actionNavArticlesToPageArticle(
+                item.id,
+                item.author,
+                item.authorAvatar!!,
+                item.category,
+                item.categoryIcon,
+                item.date,
+                item.poster,
+                item.title
+            )
+            viewModel.navigate(NavigationCommand.To(action.actionId, action.arguments))}
+        }
+
+    /*private val handleToggleBookmark = { articleId: String, isBookmark: Boolean ->
         viewModel.handleToggleBookmark(articleId, isBookmark)
     }
 
@@ -45,7 +65,7 @@ class ArticlesFragment : BaseFragment<ArticlesViewModel>() {
         val action = ArticlesFragmentDirections.actionNavArticlesToPageArticle(
             item.id,
             item.author,
-            item.authorAvatar,
+            item.authorAvatar!!,
             item.category,
             item.categoryIcon,
             item.date,
@@ -54,7 +74,7 @@ class ArticlesFragment : BaseFragment<ArticlesViewModel>() {
         )
         viewModel.navigate(NavigationCommand.To(action.actionId, action.arguments))},
         handleToggleBookmark
-    )
+    )*/
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -109,7 +129,7 @@ class ArticlesFragment : BaseFragment<ArticlesViewModel>() {
             addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.VERTICAL))
         }
 
-        viewModel.observeList(viewLifecycleOwner){
+        viewModel.observeList(viewLifecycleOwner, args.isBookmarks){
             articlesAdapter.submitList(it)
         }
     }

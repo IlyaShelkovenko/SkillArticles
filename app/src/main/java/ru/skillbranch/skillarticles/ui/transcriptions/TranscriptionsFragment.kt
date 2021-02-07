@@ -1,12 +1,10 @@
 package ru.skillbranch.skillarticles.ui.transcriptions
 
-import androidx.lifecycle.ViewModelProviders
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-
+import androidx.fragment.app.Fragment
 import ru.skillbranch.skillarticles.R
 import ru.skillbranch.skillarticles.viewmodels.transcriptions.TranscriptionsViewModel
 
@@ -27,7 +25,7 @@ class TranscriptionsFragment : Fragment() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        viewModel = ViewModelProviders.of(this).get(TranscriptionsViewModel::class.java)
+
         // TODO: Use the ViewModel
     }
 

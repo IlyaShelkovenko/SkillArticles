@@ -2,15 +2,15 @@ package ru.skillbranch.skillarticles.viewmodels.bookmarks
 
 import android.util.Log
 import androidx.lifecycle.*
+import androidx.paging.DataSource
 import androidx.paging.LivePagedListBuilder
 import androidx.paging.PagedList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import ru.skillbranch.skillarticles.data.models.ArticleItemData
-import ru.skillbranch.skillarticles.data.repositories.ArticleDataFactory
-import ru.skillbranch.skillarticles.data.repositories.ArticleStrategy
+import ru.skillbranch.skillarticles.data.local.entities.ArticleItem
 import ru.skillbranch.skillarticles.data.repositories.ArticlesRepository
+import ru.skillbranch.skillarticles.extensions.data.toArticleFilter
 import ru.skillbranch.skillarticles.viewmodels.articles.ArticleBoundaryCallback
 import ru.skillbranch.skillarticles.viewmodels.articles.ArticlesState
 import ru.skillbranch.skillarticles.viewmodels.base.BaseViewModel
@@ -29,47 +29,45 @@ class BookmarksViewModel(handle: SavedStateHandle) :
             .build()
     }
     private val listData = Transformations.switchMap(state) {
-        when {
-            it.isSearch && !it.searchQuery.isNullOrBlank() -> buildPagedList(
-                repository.searchBookmarks(it.searchQuery)
-            )
-
-            else -> buildPagedList(repository.allBookmarks())
-        }
+        val filter = it.toArticleFilter()
+        return@switchMap buildPagedList(repository.rawQueryArticles(filter))
     }
 
     fun observeList(
         owner: LifecycleOwner,
-        onChanged: (list: PagedList<ArticleItemData>) -> Unit
+        isBookmark: Boolean = true,
+        onChanged: (list: PagedList<ArticleItem>) -> Unit
     ) {
+        updateState { it.copy(isBookmark = isBookmark) }
         listData.observe(owner, Observer { onChanged(it) })
     }
 
     private fun buildPagedList(
-        dataFactory: ArticleDataFactory
-    ): LiveData<PagedList<ArticleItemData>> {
-        val builder = LivePagedListBuilder<Int, ArticleItemData>(
-            dataFactory,
-            listConfig
+        dataFactory: DataSource.Factory<Int, ArticleItem>
+    ): LiveData<PagedList<ArticleItem>> {
+        val builder = LivePagedListBuilder<Int, ArticleItem>(
+            dataFactory, listConfig
         )
 
-        //if all articles
-        if (dataFactory.strategy is ArticleStrategy.AllArticles) {
+        if (isEmptyFiler())
             builder.setBoundaryCallback(
                 ArticleBoundaryCallback(
                     ::zeroLoadingHandle,
                     ::itemAtEndHandle
                 )
             )
-        }
-
         return builder
             .setFetchExecutor(Executors.newSingleThreadExecutor())
             .build()
     }
 
-    private fun itemAtEndHandle(lastLoadArticle: ArticleItemData) {
-        Log.e("ArticlesViewModel", "itemAtEndHandle: ")
+    private fun isEmptyFiler(): Boolean = currentState.searchQuery.isNullOrEmpty()
+            && !currentState.isBookmark
+            && currentState.selectedCategories.isEmpty()
+            && !currentState.isHashtagSearch
+
+    private fun itemAtEndHandle(lastLoadArticle: ArticleItem) {
+       /* Log.e("ArticlesViewModel", "itemAtEndHandle: ")
         viewModelScope.launch(Dispatchers.IO) {
             val items = repository.loadArticlesFromNetwork(
                 start = lastLoadArticle.id.toInt().inc(),
@@ -89,7 +87,7 @@ class BookmarksViewModel(handle: SavedStateHandle) :
                     )
                 )
             }
-        }
+        }*/
     }
 
     private fun zeroLoadingHandle() {
@@ -117,10 +115,10 @@ class BookmarksViewModel(handle: SavedStateHandle) :
         updateState { it.copy(isSearch = isSearch) }
     }
 
-    fun handleToggleBookmark(articleId: String, hasBookmark: Boolean): Unit {
-        updateState { it.copy(isLoading = true) }
-        repository.updateBookmark(articleId, !hasBookmark)
-        updateState { it.copy(isLoading = false) }
+    fun handleToggleBookmark(articleId: String): Unit {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.toggleBookmark(articleId)
+        }
     }
 }
 

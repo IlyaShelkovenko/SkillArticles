@@ -1,4 +1,4 @@
-package ru.skillbranch.skillarticles.viewmodels.base
+ package ru.skillbranch.skillarticles.viewmodels.base
 
 import android.os.Bundle
 import androidx.annotation.UiThread
@@ -99,6 +99,8 @@ abstract class BaseViewModel<T : IViewModelState>(
 
     @Suppress("UNCHECKED_CAST")
     fun restoreState(){
+        val restoredState = currentState.restore(handleState) as T
+        if (currentState == restoredState) return
         state.value = currentState.restore(handleState) as T
     }
 
