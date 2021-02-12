@@ -1,6 +1,8 @@
 package ru.skillbranch.skillarticles.data.local.entities
 
 import androidx.room.*
+import ru.skillbranch.skillarticles.data.local.MarkdownConverter
+import ru.skillbranch.skillarticles.data.repositories.MarkdownElement
 import java.util.*
 
 @Entity(tableName = "articles")
@@ -63,7 +65,7 @@ data class ArticleItem(
     val isBookmark: Boolean = false
 )
 
-/*@DatabaseView(
+@DatabaseView(
     """
         SELECT id, article.title AS title, description, author_user_id, author_avatar, author_name, date, 
         category.category_id AS category_category_id, category.title AS category_title, category.icon AS category_icon,
@@ -75,7 +77,7 @@ data class ArticleItem(
         LEFT JOIN article_personal_infos AS personal ON personal.article_id = id
     """
 )
-*//*@TypeConverters(MarkdownConverter::class)
+@TypeConverters(MarkdownConverter::class)
 data class ArticleFull(
     val id: String,
     val title: String,
@@ -95,4 +97,3 @@ data class ArticleFull(
 //    val source: String? = null, //TODO implement me
 //    val tags: List<String>
 )
-*/
