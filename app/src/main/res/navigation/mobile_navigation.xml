@@ -110,7 +110,7 @@
         app:popUpToInclusive="true" />
     <dialog
         android:id="@+id/dialog_choose_category"
-        android:name="ru.skillbranch.skillarticles.ui.dialogs.ChooseCategoryDialog"
+        android:name="ru.skillbranch.skillarticles.ui.dialogs.ChoseCategoryDialog"
         android:label="ChooseCategoryDialogFragment" >
         <argument
             android:name="selected_categories"

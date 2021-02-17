@@ -9,7 +9,7 @@ import androidx.room.Transaction
 import ru.skillbranch.skillarticles.data.local.entities.ArticlePersonalInfo
 
 @Dao
-interface ArticlePersonalInfos : BaseDao<ArticlePersonalInfo> {
+interface ArticlePersonalInfosDao : BaseDao<ArticlePersonalInfo> {
 
     @Transaction
     fun upsert(list: List<ArticlePersonalInfo>){
