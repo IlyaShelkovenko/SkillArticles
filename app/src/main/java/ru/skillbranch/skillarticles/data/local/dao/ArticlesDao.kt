@@ -27,18 +27,18 @@ interface ArticlesDao : BaseDao<Article> {
     @Query("""
         SELECT * FROM articles
     """)
-    fun findArticles() : List<Article>
+    fun findArticles() : LiveData<List<Article>>
 
     @Query("""
         SELECT * FROM articles
         WHERE id = :id
     """)
-    fun findArticleById(id: String): Article
+    fun findArticleById(id: String): LiveData<Article>
 
     @Query("""
         SELECT * FROM ArticleItem
     """)
-    fun findArticleItems(): List<ArticleItem>
+    fun findArticleItems(): LiveData<List<ArticleItem>>
 
     @Delete
     fun delete(article: Article)
@@ -47,7 +47,7 @@ interface ArticlesDao : BaseDao<Article> {
         SELECT * FROM ArticleItem
         WHERE category_id IN (:categoryIds)
     """)
-    fun findArticleItemsByCategoryIds(categoryIds: List<String>): List<ArticleItem>
+    fun findArticleItemsByCategoryIds(categoryIds: List<String>): LiveData<List<ArticleItem>>
 
 
     @Query("""
@@ -55,7 +55,7 @@ interface ArticlesDao : BaseDao<Article> {
         INNER JOIN article_tag_x_ref AS refs ON refs.a_id = id
         WHERE refs.t_id = :tag
     """)
-    fun findArticlesByTagId(tag: String): List<ArticleItem>
+    fun findArticlesByTagId(tag: String): LiveData<List<ArticleItem>>
 
 
     @RawQuery(observedEntities = [ArticleItem::class])

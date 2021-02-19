@@ -17,6 +17,9 @@ object PrefManager {
         PreferenceManager.getDefaultSharedPreferences(App.applicationContext())
     }
 
+    var isDarkMode by PrefDelegate(false)
+    var isBigText by PrefDelegate(false)
+
     fun clearAll(){
         preferences.edit().clear().apply()
     }
@@ -24,6 +27,11 @@ object PrefManager {
     fun getAppSettings(): LiveData<AppSettings> {
         //TODO implement me
         return MutableLiveData(AppSettings())
+    }
+
+    fun updateSettings(appSettings: AppSettings) {
+        isDarkMode = appSettings.isDarkMode
+        isBigText = appSettings.isBigText
     }
 
     fun isAuth(): MutableLiveData<Boolean> {

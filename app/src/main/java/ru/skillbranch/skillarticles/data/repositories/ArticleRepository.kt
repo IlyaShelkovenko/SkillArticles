@@ -8,10 +8,9 @@ import androidx.paging.ItemKeyedDataSource
 import ru.skillbranch.skillarticles.data.*
 import ru.skillbranch.skillarticles.data.local.DbManager.db
 import ru.skillbranch.skillarticles.data.local.PrefManager
+import ru.skillbranch.skillarticles.data.local.dao.*
 import ru.skillbranch.skillarticles.data.local.entities.ArticleFull
-import ru.skillbranch.skillarticles.data.local.entities.ArticlePersonalInfo
 import ru.skillbranch.skillarticles.data.models.*
-import ru.skillbranch.skillarticles.data.models.ArticleData
 import ru.skillbranch.skillarticles.extensions.data.toArticleContent
 import java.lang.Thread.sleep
 import kotlin.math.abs
@@ -37,10 +36,22 @@ interface IArticleRepository {
 object ArticleRepository : IArticleRepository{
     private val network = NetworkDataHolder
     private val preferences = PrefManager
-    private val articlesDao = db.articlesDao()
-    private val articlesPersonalDao = db.articlePersonalInfos()
-    private val articleCountsDao = db.articleCountsDao()
-    private val articleContentDao = db.articleContentDao()
+    private var articlesDao = db.articlesDao()
+    private var articlesPersonalDao = db.articlePersonalInfosDao()
+    private var articleCountsDao = db.articleCountsDao()
+    private var articleContentDao = db.articleContentsDao()
+
+    fun setupTestDao(
+        articlesDao: ArticlesDao,
+        articleCountsDao: ArticleCountsDao,
+        articleContentDao: ArticleContentsDao,
+        articlePersonalDao: ArticlePersonalInfosDao
+    ){
+        this.articlesDao = articlesDao
+        this.articlesPersonalDao = articlePersonalDao
+        this.articleCountsDao = articleCountsDao
+        this.articleContentDao = articleContentDao
+    }
 
     override fun findArticle(articleId: String): LiveData<ArticleFull> {
         return articlesDao.findFullArticle(articleId)
@@ -57,7 +68,7 @@ object ArticleRepository : IArticleRepository{
     }
 
     override fun updateSettings(appSettings: AppSettings) {
-
+        preferences.updateSettings(appSettings)
     }
 
     override fun fetchArticleContent(articleId: String) {
