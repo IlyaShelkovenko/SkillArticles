@@ -70,7 +70,7 @@ class RootActivity : BaseActivity<RootViewModel>() {
             }
             is Notify.ErrorMessage -> {
                 with(snackbar) {
-                    setBackgroundTint(getColor(R.color.design_default_color_error))
+                    setBackgroundTint(getColor(R.color.color_accent))
                     setTextColor(getColor(android.R.color.white))
                     setActionTextColor(getColor(android.R.color.white))
                     setAction(notify.errLabel) {

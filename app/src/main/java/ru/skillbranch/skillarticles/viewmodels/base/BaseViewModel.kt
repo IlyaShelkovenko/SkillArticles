@@ -7,7 +7,8 @@ import androidx.lifecycle.*
 import androidx.navigation.NavOptions
 import androidx.navigation.Navigator
 
-abstract class BaseViewModel<T : IViewModelState>(
+abstract class BaseViewModel<T : IViewModelState>
+    (
     private val handleState : SavedStateHandle,
     initState: T) : ViewModel() {
     @VisibleForTesting(otherwise = VisibleForTesting.PROTECTED)

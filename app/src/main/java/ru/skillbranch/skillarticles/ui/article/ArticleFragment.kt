@@ -338,13 +338,11 @@ class ArticleFragment : BaseFragment<ArticleViewModel>(), IArticleView{
         override fun saveUi(outState: Bundle) {
             outState.putBoolean(::isFocusedSearch.name, search_view?.hasFocus() ?: false)
             outState.putString(::commentText.name, et_comment.text.toString())
-            val a = 0
         }
 
         override fun restoreUi(savedState: Bundle?) {
             isFocusedSearch = savedState?.getBoolean(::isFocusedSearch.name) ?: false
             et_comment.setText(savedState?.getString(::commentText.name) ?: "")
-            val a = 0
         }
     }
 

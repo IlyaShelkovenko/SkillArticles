@@ -2,14 +2,12 @@ package ru.skillbranch.skillarticles.ui.dialogs
 
 import android.app.Dialog
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.navArgs
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import ru.skillbranch.skillarticles.R
 import ru.skillbranch.skillarticles.viewmodels.articles.ArticlesViewModel
 
@@ -20,27 +18,43 @@ class ChoseCategoryDialog : DialogFragment() {
     private val selectedCategories = mutableListOf<String>()
     private val args: ChoseCategoryDialogArgs by navArgs()
 
+    private val categoryAdapter = CategoryAdapter { categoryId: String, isChecked: Boolean ->
+        if(isChecked) selectedCategories.add(categoryId)
+        else selectedCategories.remove(categoryId)
+    }
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        // TODO save cheked state and implement custom items
-        val categories = args.categories.toList().map { "${it.title} (${it.articlesCount})" }.toTypedArray()
-        val checked = BooleanArray(args.categories.size){
-            args.selectedCategories.contains(args.categories[it].categoryId)
+
+        selectedCategories.clear()
+        selectedCategories.addAll(
+            savedInstanceState?.getStringArray("checked") ?: args.selectedCategories
+        )
+
+        val categoryItems = args.categories.map { it.toItem(selectedCategories.contains(it.categoryId)) }
+
+        categoryAdapter.submitList(categoryItems)
+
+        val listView = layoutInflater.inflate(R.layout.fragment_chose_category_dialog, null) as RecyclerView
+
+        with(listView){
+            layoutManager  = LinearLayoutManager(requireContext())
+            adapter = categoryAdapter
         }
-        val adb = AlertDialog.Builder(requireContext())
+
+        return AlertDialog.Builder(requireContext())
             .setTitle("Choose category")
             .setPositiveButton("Apply"){ _,_ ->
-                viewModel.applyCategories(selectedCategories)
+                viewModel.applyCategories(selectedCategories.toList())
             }
             .setNegativeButton("Reset"){_,_ ->
                 viewModel.applyCategories(emptyList())
-            }
-            .setMultiChoiceItems(categories, checked){dialog, which, isChecked ->
-                if(isChecked)
-                    selectedCategories.add(args.categories[which].categoryId)
-                else
-                    selectedCategories.remove(args.categories[which].categoryId)
-            }
+            }.setView(listView)
+            .create()
 
-        return adb.create()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putStringArray("checked", selectedCategories.toTypedArray())
+        super.onSaveInstanceState(outState)
     }
 }

@@ -23,3 +23,8 @@ class MarkdownConverter{
         MarkdownParser.parse(it)
     }
 }
+
+class ListConverter {
+    @TypeConverter
+    fun toList(string: String?) : List<String> = string?.split(",") ?: emptyList()
+}

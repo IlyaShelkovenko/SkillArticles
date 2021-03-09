@@ -66,4 +66,7 @@ interface ArticlesDao : BaseDao<Article> {
         WHERE id = :articleId
     """)
     fun findFullArticle(articleId: String): LiveData<ArticleFull>
+
+    @Query("SELECT * FROM articles")
+    suspend fun findArticlesTest(): List<Article>
 }
