@@ -8,10 +8,11 @@
     <fragment
         android:id="@+id/page_article"
         android:name="ru.skillbranch.skillarticles.ui.article.ArticleFragment"
-        android:label="ArticleFragment" >
+        android:label="{title}" >
         <argument
             android:name="article_id"
-            app:argType="string" />
+            app:argType="string"
+            android:defaultValue="-1"/>
         <argument
             android:name="author"
             app:argType="string" />

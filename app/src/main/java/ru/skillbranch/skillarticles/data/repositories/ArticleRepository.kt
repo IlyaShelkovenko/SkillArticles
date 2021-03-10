@@ -19,16 +19,16 @@ import kotlin.math.abs
 interface IArticleRepository {
     fun findArticle(articleId: String): LiveData<ArticleFull>
     fun getAppSettings(): LiveData<AppSettings>
-    fun toggleLike(articleId: String)
-    fun toggleBookmark(articleId: String)
+    suspend fun toggleLike(articleId: String)
+    suspend fun toggleBookmark(articleId: String)
     fun isAuth(): MutableLiveData<Boolean>
     fun loadCommentsByRange(slug: String?, size: Int,articleId: String) : List<CommentItemData>
-    fun sendMessage(articleId: String, text: String, answerToSlug: String?)
+    suspend fun sendMessage(articleId: String, text: String, answerToSlug: String?)
     fun loadAllComments(articleId: String, total: Int): CommentsDataFactory
-    fun decrementLike(articleId: String)
-    fun incrementLike(articleId: String)
+    suspend fun decrementLike(articleId: String)
+    suspend fun incrementLike(articleId: String)
     fun updateSettings(copy: AppSettings)
-    fun fetchArticleContent(articleId: String)
+    suspend fun fetchArticleContent(articleId: String)
     fun findArticleCommentCount(articleId: String): LiveData<Int>
 
 }
@@ -59,11 +59,11 @@ object ArticleRepository : IArticleRepository{
 
     override fun getAppSettings(): LiveData<AppSettings> = preferences.appSettings //from preferences
 
-    override fun toggleLike(articleId: String) {
+    override suspend fun toggleLike(articleId: String) {
         articlesPersonalDao.toggleLikeOrInsert(articleId)
     }
 
-    override fun toggleBookmark(articleId: String) {
+    override suspend fun toggleBookmark(articleId: String) {
         articlesPersonalDao.toggleBookmarkOrInsert(articleId)
     }
 
@@ -71,7 +71,7 @@ object ArticleRepository : IArticleRepository{
         preferences.updateSettings(appSettings)
     }
 
-    override fun fetchArticleContent(articleId: String) {
+    override suspend fun fetchArticleContent(articleId: String) {
         val content = network.loadArticleContent(articleId).apply {
             sleep(1500)
         }
@@ -107,15 +107,15 @@ object ArticleRepository : IArticleRepository{
         }
     }
 
-    override fun decrementLike(articleId: String) {
+    override suspend fun decrementLike(articleId: String) {
         articleCountsDao.decrementLike(articleId)
     }
 
-    override fun incrementLike(articleId: String) {
+    override suspend fun incrementLike(articleId: String) {
         articleCountsDao.incrementLike(articleId)
     }
 
-    override fun sendMessage(articleId: String, comment: String, answerToSlug: String?) {
+    override suspend fun sendMessage(articleId: String, comment: String, answerToSlug: String?) {
         network.sendMessage(articleId, comment, answerToSlug,
         User("777", "John Doe", "https://skill-branch.ru/img/mail/bot/android-category.png")
         )

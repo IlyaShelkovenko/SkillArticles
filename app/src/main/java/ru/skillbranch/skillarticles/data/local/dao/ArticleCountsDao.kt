@@ -13,7 +13,7 @@ import ru.skillbranch.skillarticles.data.local.entities.ArticleCounts
 interface ArticleCountsDao : BaseDao<ArticleCounts> {
 
     @Transaction
-    fun upsert(list: List<ArticleCounts>) {
+    suspend fun upsert(list: List<ArticleCounts>) {
         insert(list)
             .mapIndexed { index, recordResult -> if (recordResult == -1L) list[index] else null }
             .filterNotNull()
@@ -42,7 +42,7 @@ interface ArticleCountsDao : BaseDao<ArticleCounts> {
         WHERE article_id = :articleId
     """
     )
-    fun incrementLike(articleId: String): Int
+    suspend fun incrementLike(articleId: String): Int
 
     @Query(
         """
@@ -50,7 +50,7 @@ interface ArticleCountsDao : BaseDao<ArticleCounts> {
         WHERE article_id = :articleId
     """
     )
-    fun decrementLike(articleId: String): Int
+    suspend fun decrementLike(articleId: String): Int
 
     @Query(
         """
@@ -58,7 +58,7 @@ interface ArticleCountsDao : BaseDao<ArticleCounts> {
         WHERE article_id = :articleId
     """
     )
-    fun incrementCommentsCount(articleId: String)
+    suspend fun incrementCommentsCount(articleId: String)
 
     @Query(
         """

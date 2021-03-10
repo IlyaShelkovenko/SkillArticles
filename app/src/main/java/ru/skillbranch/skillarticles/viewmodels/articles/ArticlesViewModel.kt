@@ -21,6 +21,8 @@ import java.util.concurrent.Executors
 class ArticlesViewModel(handle: SavedStateHandle) :
     BaseViewModel<ArticlesState>(handle, ArticlesState()) {
     val repository = ArticlesRepository
+    private var isLoadingInitial = false
+    private var isLoadingAfter = false
     private val listConfig by lazy {
         PagedList.Config.Builder()
             .setEnablePlaceholders(false)
@@ -85,38 +87,26 @@ class ArticlesViewModel(handle: SavedStateHandle) :
             && !currentState.isHashtagSearch
 
     private fun itemAtEndHandle(lastLoadArticle: ArticleItem) {
-        Log.d("ArticlesViewModel", "itemAtEndHandle")
-        viewModelScope.launch(Dispatchers.IO) {
-            val items = repository.loadArticlesFromNetwork(
-                start = lastLoadArticle.id.toInt().inc(),
+        if(isLoadingAfter) return
+        else isLoadingAfter = true
+
+        viewModelScope.launch {
+            repository.loadArticlesFromNetwork(
+                start = lastLoadArticle.id,
                 size = listConfig.pageSize
             )
-
-            if (items.isNotEmpty()) {
-                repository.insertArticlesToDb(items)
-                listData.value?.dataSource?.invalidate()
-            }
-
-            withContext(Dispatchers.Main) {
-                notify(
-                    Notify.TextMessage(
-                        "Load from network articles " +
-                                "from ${items.firstOrNull()?.data?.id} to ${items.lastOrNull()?.data?.id}"
-                    )
-                )
-            }
+        }.invokeOnCompletion {
+            isLoadingAfter = false
         }
     }
 
     private fun zeroLoadingHandle() {
-        Log.d("ArticlesViewModel", "zeroLoadingHandle")
-        notify(Notify.TextMessage("Storage is empty"))
-        viewModelScope.launch(Dispatchers.IO) {
-            val items =
-                repository.loadArticlesFromNetwork(start = 0, size = listConfig.initialLoadSizeHint)
-            if (items.isNotEmpty()) {
-                repository.insertArticlesToDb(items)
-            }
+        if(isLoadingInitial) return
+        else isLoadingInitial = true
+        viewModelScope.launch {
+                repository.loadArticlesFromNetwork(start = null, size = listConfig.initialLoadSizeHint)
+        }.invokeOnCompletion {
+            isLoadingInitial = false
         }
     }
 
