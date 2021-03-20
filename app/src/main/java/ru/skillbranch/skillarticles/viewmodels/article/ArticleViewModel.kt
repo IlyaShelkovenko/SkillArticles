@@ -10,13 +10,9 @@ import androidx.paging.PagedList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import ru.skillbranch.skillarticles.data.models.ArticleData
-import ru.skillbranch.skillarticles.data.local.entities.ArticlePersonalInfo
-import ru.skillbranch.skillarticles.data.models.CommentItemData
+import ru.skillbranch.skillarticles.data.remote.res.CommentRes
 import ru.skillbranch.skillarticles.data.repositories.*
 import ru.skillbranch.skillarticles.extensions.data.toAppSettings
-import ru.skillbranch.skillarticles.extensions.data.toArticlePersonalInfo
-import ru.skillbranch.skillarticles.extensions.format
 import ru.skillbranch.skillarticles.extensions.indexesOf
 import ru.skillbranch.skillarticles.extensions.shortFormat
 import ru.skillbranch.skillarticles.viewmodels.base.BaseViewModel
@@ -38,9 +34,9 @@ class ArticleViewModel(
             .build()
     }
 
-    private val listData: LiveData<PagedList<CommentItemData>> =
+    private val listData: LiveData<PagedList<CommentRes>> =
         Transformations.switchMap(repository.findArticleCommentCount(articleId)) {
-            buildPageList(repository.loadAllComments(articleId, it))
+            buildPageList(repository.loadAllComments(articleId, it, ::commentLoadErrorHandler))
         }
 
     init {
@@ -70,9 +66,19 @@ class ArticleViewModel(
             state.copy(isAuth = auth)
         }
     }
+    fun refresh(){
+        launchSafety {
+            launch { repository.fetchArticleContent(articleId) }
+            launch { repository.refreshCommentsCount(articleId) }
+        }
+    }
+
+    private fun commentLoadErrorHandler(throwable: Throwable) {
+        // TODO handle network errors
+    }
 
     private fun fetchContent() {
-        viewModelScope.launch(Dispatchers.IO) {
+        launchSafety {
             repository.fetchArticleContent(articleId)
         }
     }
@@ -105,22 +111,16 @@ class ArticleViewModel(
             Notify.TextMessage("Mark is liked")
 
         }
-        viewModelScope.launch(Dispatchers.IO) {
+        launchSafety(null, { notify(msg) }) {
             repository.toggleLike(articleId)
             if (isLiked) repository.decrementLike(articleId) else repository.incrementLike(articleId)
-            withContext(Dispatchers.Main) {
-                notify(msg)
-            }
         }
     }
 
     override fun handleBookmark() {
         val msg = if (currentState.isBookmark) "Remove from bookmarks"  else "Add to bookmarks"
-        viewModelScope.launch(Dispatchers.IO) {
+       launchSafety(null, {notify(Notify.TextMessage(msg)) } ) {
             repository.toggleBookmark(articleId)
-            withContext(Dispatchers.Main) {
-                notify(Notify.TextMessage(msg))
-            }
         }
 
     }
@@ -167,15 +167,25 @@ class ArticleViewModel(
     }
 
     override fun handleSendComment(comment: String) {
+        if(comment == null){
+            notify(Notify.TextMessage("Comment must be not empty"))
+            return
+        }
+        updateState { it.copy(comment = comment) }
         if (!currentState.isAuth) {
-            updateState { it.copy(comment = comment) }
             navigate(NavigationCommand.StartLogin())
         } else {
-            viewModelScope.launch(Dispatchers.IO) {
-                repository.sendMessage(articleId, comment, currentState.answerToSlug)
-                withContext(Dispatchers.Main) {
-                    updateState { it.copy(answerTo = null, answerToSlug = null, comment = null) }
+            launchSafety(null,{
+                updateState {
+                    it.copy(
+                    answerTo = null,
+                    answerToMessageId = null,
+                    comment = null
+                    )
                 }
+            }){
+                repository.sendMessage(articleId, comment, currentState.answerToMessageId)
+
             }
         }
 
@@ -183,7 +193,7 @@ class ArticleViewModel(
 
     fun observeList(
         owner: LifecycleOwner,
-        onChange: (list: PagedList<CommentItemData>) -> Unit
+        onChange: (list: PagedList<CommentRes>) -> Unit
     ) {
         listData.observe(owner, Observer {
             onChange(it)
@@ -192,8 +202,8 @@ class ArticleViewModel(
 
     private fun buildPageList(
         dataFactory: CommentsDataFactory
-    ): LiveData<PagedList<CommentItemData>> {
-        return LivePagedListBuilder<String, CommentItemData>(
+    ): LiveData<PagedList<CommentRes>> {
+        return LivePagedListBuilder<String, CommentRes>(
             dataFactory,
             listConfig
         )
@@ -206,11 +216,11 @@ class ArticleViewModel(
     }
 
     fun handleClearComment() {
-        updateState { it.copy(answerTo = null, answerToSlug = null) }
+        updateState { it.copy(answerTo = null, answerToMessageId = null) }
     }
 
-    fun handleReplyTo(slug: String, name: String) {
-        updateState { it.copy(answerToSlug = slug, answerTo = "Reply to $name") }
+    fun handleReplyTo(messageId: String, name: String) {
+        updateState { it.copy(answerToMessageId = messageId, answerTo = "Reply to $name") }
     }
 
 
@@ -240,7 +250,7 @@ data class ArticleState(
     val comment: String? = null,
     val commentsCount: Int = 0,
     val answerTo: String? = null,
-    val answerToSlug: String? = null,
+    val answerToMessageId: String? = null,
     val showBottomBar: Boolean = true
 ) : IViewModelState {
 
@@ -251,7 +261,7 @@ data class ArticleState(
         outState.set("searchPosition", searchPosition)
         outState.set("comment", comment)
         outState.set("answerTo", answerTo)
-        outState.set("answerToSlug", answerToSlug)
+        outState.set("answerToSlug", answerToMessageId)
 
     }
 
@@ -263,7 +273,7 @@ data class ArticleState(
             searchPosition = savedState["searchPosition"] ?: 0,
             comment = savedState["comment"],
             answerTo = savedState["answerTo"],
-            answerToSlug = savedState["answerToSlug"]
+            answerToMessageId = savedState["answerToSlug"]
         )
     }
 }

@@ -9,8 +9,12 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import ru.skillbranch.skillarticles.AppConfig
+import ru.skillbranch.skillarticles.data.JsonConverter.moshi
+import ru.skillbranch.skillarticles.data.remote.interceptors.ErrorStatusInterceptor
+import ru.skillbranch.skillarticles.data.remote.interceptors.NetworkStatusInterceptor
 import java.sql.Timestamp
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 object NetworkManager {
     val api : RestService by lazy {
@@ -20,13 +24,11 @@ object NetworkManager {
             level = HttpLoggingInterceptor.Level.BODY
         }
         val client = OkHttpClient().newBuilder()
+            .readTimeout(2, TimeUnit.SECONDS)
+            .writeTimeout(5, TimeUnit.SECONDS)
+            .addInterceptor(NetworkStatusInterceptor())
             .addInterceptor(logging)
-            .build()
-
-        //json converter
-        val moshi = Moshi.Builder()
-            .add(DateAdapter())
-            .add(KotlinJsonAdapterFactory()) // convert json to class by reflection
+            .addInterceptor(ErrorStatusInterceptor())
             .build()
 
         //retrofit
@@ -40,10 +42,3 @@ object NetworkManager {
     }
 }
 
-class DateAdapter {
-    @ToJson
-    fun toJson(date: Date) = date.time
-
-    @FromJson
-    fun fromJson(timestamp: Long) = Date(timestamp)
-}

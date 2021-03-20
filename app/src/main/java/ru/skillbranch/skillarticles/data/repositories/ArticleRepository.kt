@@ -1,19 +1,19 @@
 package ru.skillbranch.skillarticles.data.repositories
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.paging.DataSource
 import androidx.paging.ItemKeyedDataSource
-import ru.skillbranch.skillarticles.data.*
 import ru.skillbranch.skillarticles.data.local.DbManager.db
 import ru.skillbranch.skillarticles.data.local.PrefManager
 import ru.skillbranch.skillarticles.data.local.dao.*
 import ru.skillbranch.skillarticles.data.local.entities.ArticleFull
 import ru.skillbranch.skillarticles.data.models.*
+import ru.skillbranch.skillarticles.data.remote.NetworkManager
+import ru.skillbranch.skillarticles.data.remote.RestService
+import ru.skillbranch.skillarticles.data.remote.req.MessageReq
+import ru.skillbranch.skillarticles.data.remote.res.CommentRes
 import ru.skillbranch.skillarticles.extensions.data.toArticleContent
-import java.lang.Thread.sleep
-import kotlin.math.abs
 
 
 interface IArticleRepository {
@@ -22,9 +22,8 @@ interface IArticleRepository {
     suspend fun toggleLike(articleId: String)
     suspend fun toggleBookmark(articleId: String)
     fun isAuth(): MutableLiveData<Boolean>
-    fun loadCommentsByRange(slug: String?, size: Int,articleId: String) : List<CommentItemData>
     suspend fun sendMessage(articleId: String, text: String, answerToSlug: String?)
-    fun loadAllComments(articleId: String, total: Int): CommentsDataFactory
+    fun loadAllComments(articleId: String, totalCount: Int, errHandler: (Throwable) -> Unit): CommentsDataFactory
     suspend fun decrementLike(articleId: String)
     suspend fun incrementLike(articleId: String)
     fun updateSettings(copy: AppSettings)
@@ -34,7 +33,7 @@ interface IArticleRepository {
 }
 
 object ArticleRepository : IArticleRepository{
-    private val network = NetworkDataHolder
+    private val network = NetworkManager.api
     private val preferences = PrefManager
     private var articlesDao = db.articlesDao()
     private var articlesPersonalDao = db.articlePersonalInfosDao()
@@ -72,9 +71,7 @@ object ArticleRepository : IArticleRepository{
     }
 
     override suspend fun fetchArticleContent(articleId: String) {
-        val content = network.loadArticleContent(articleId).apply {
-            sleep(1500)
-        }
+        val content = network.loadArticleContent(articleId)
         articleContentDao.insert(content.toArticleContent())
     }
 
@@ -84,87 +81,122 @@ object ArticleRepository : IArticleRepository{
 
     override fun isAuth(): MutableLiveData<Boolean> = preferences.isAuth()
 
-    override fun loadAllComments(articleId: String, totalCount: Int) = CommentsDataFactory(
-        itemProvider = ::loadCommentsByRange,
+    override fun loadAllComments(articleId: String, totalCount: Int, errHandler: (Throwable) -> Unit) = CommentsDataFactory(
+        itemProvider = network,
         articleId = articleId,
-        totalCount = totalCount
+        totalCount = totalCount,
+        errHandler = errHandler
     )
 
-    override fun loadCommentsByRange(slug:String?, size: Int, articleId: String ) : List<CommentItemData>{
-        val data = network.commentsData.getOrElse(articleId) { mutableListOf()}
-        return when {
-            slug == null -> data.take(size)
 
-            size > 0 -> data.dropWhile { it.slug != slug }
-                .drop(1)
-                .take(size)
-            size < 0 -> data
-                .dropLastWhile { it.slug != slug }
-                .dropLast(1)
-                .takeLast(abs(size))
 
-            else -> emptyList()
+    override suspend fun decrementLike(articleId: String) {
+        if(preferences.accessToken.isEmpty()) {
+            articleCountsDao.decrementLike(articleId)
+            return
+        }
+
+        try {
+            val res = network.decrementLike(articleId, preferences.accessToken)
+            articleCountsDao.updateLike(articleId, res.likeCount)
+        } catch (e : Throwable){
+            articleCountsDao.decrementLike(articleId)
+            throw e
         }
     }
 
-    override suspend fun decrementLike(articleId: String) {
-        articleCountsDao.decrementLike(articleId)
-    }
-
     override suspend fun incrementLike(articleId: String) {
-        articleCountsDao.incrementLike(articleId)
+        if(preferences.accessToken.isEmpty()) {
+            articleCountsDao.incrementLike(articleId)
+            return
+        }
+
+        try {
+            val res = network.incrementLike(articleId, preferences.accessToken)
+            articleCountsDao.updateLike(articleId, res.likeCount)
+        } catch (e : Throwable){
+            articleCountsDao.incrementLike(articleId)
+            throw e
+        }
     }
 
-    override suspend fun sendMessage(articleId: String, comment: String, answerToSlug: String?) {
-        network.sendMessage(articleId, comment, answerToSlug,
-        User("777", "John Doe", "https://skill-branch.ru/img/mail/bot/android-category.png")
-        )
-        articleCountsDao.incrementCommentsCount(articleId)
+    override suspend fun sendMessage(articleId: String, message: String, answerToMessageId: String?) {
+        val (_, messageCount) = network.sendMessage(articleId, MessageReq(message,answerToMessageId), preferences.accessToken)
+        articleCountsDao.updateCommentsCount(articleId, messageCount)
+    }
+
+    suspend fun refreshCommentsCount(articleId: String) {
+        val counts = network.loadArticleCounts(articleId)
+        articleCountsDao.updateCommentsCount(articleId, counts.comments)
     }
 }
 
 class CommentsDataFactory(
-    private val itemProvider: (String?, Int, String) -> List<CommentItemData>,
+    private val itemProvider: RestService,
     private val articleId: String,
-    private val totalCount: Int
-) : DataSource.Factory<String?, CommentItemData>() {
-    override fun create(): DataSource<String?, CommentItemData> =
-        CommentsDataSource(itemProvider, articleId, totalCount)
+    private val totalCount: Int,
+    private val errHandler: (Throwable) -> Unit
+) : DataSource.Factory<String?, CommentRes>() {
+    override fun create(): DataSource<String?, CommentRes> =
+        CommentsDataSource(itemProvider, articleId, totalCount, errHandler)
 }
 
 class CommentsDataSource(
-    private val itemProvider: (String?, Int, String) -> List<CommentItemData>,
+    private val itemProvider: RestService,
     private val articleId: String,
-    private val totalCount: Int
-) : ItemKeyedDataSource<String, CommentItemData>() {
-    override fun getKey(item: CommentItemData): String = item.slug
+    private val totalCount: Int,
+    private val errHandler: (Throwable) -> Unit
+) : ItemKeyedDataSource<String, CommentRes>() {
+    override fun getKey(item: CommentRes): String = item.id
 
     override fun loadInitial(
         params: LoadInitialParams<String>,
-        callback: LoadInitialCallback<CommentItemData>
+        callback: LoadInitialCallback<CommentRes>
     ) {
-        val result = itemProvider(params.requestedInitialKey, params.requestedLoadSize, articleId)
-        Log.d(
-            "ArticleRepository",
-            "loadInitial: key > ${params.requestedInitialKey} size > ${result.size} totalCount > ${totalCount}"
-        )
-        callback.onResult(
-            if (totalCount > 0) result else emptyList(),
-            0,
-            totalCount
-        )
+        try{
+            val result = itemProvider.loadComments(
+                articleId,
+                params.requestedInitialKey,
+                params.requestedLoadSize
+            ).execute()
+
+            callback.onResult(
+                if (totalCount > 0) result.body()!! else emptyList(),
+                0,
+                totalCount
+            )
+        }catch (e: Throwable){
+            errHandler(e)
+        }
+
     }
 
-    override fun loadAfter(params: LoadParams<String>, callback: LoadCallback<CommentItemData>) {
-        val result = itemProvider(params.key, params.requestedLoadSize, articleId)
-        Log.d("ArticleRepository", "loadAfter: key > ${params.key} size > ${result.size}")
-        callback.onResult(result)
+    override fun loadAfter(params: LoadParams<String>, callback: LoadCallback<CommentRes>) {
+        try {
+            val result = itemProvider.loadComments(
+                articleId,
+                params.key,
+                params.requestedLoadSize
+            ).execute()
+
+            callback.onResult(result.body()!!)
+        } catch (e: Throwable) {
+            errHandler(e)
+        }
     }
 
-    override fun loadBefore(params: LoadParams<String>, callback: LoadCallback<CommentItemData>) {
-        val result = itemProvider(params.key, -params.requestedLoadSize, articleId)
-        Log.d("ArticleRepository", "loadBefore: key > ${params.key} size > ${result.size}")
-        callback.onResult(result)
+    override fun loadBefore(params: LoadParams<String>, callback: LoadCallback<CommentRes>) {
+        try {
+            val result = itemProvider.loadComments(
+                articleId,
+                params.key,
+                -params.requestedLoadSize
+            ).execute()
+
+            callback.onResult(result.body()!!)
+        }catch(e: Throwable) {
+            errHandler(e)
+        }
     }
 
 }

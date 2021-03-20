@@ -35,9 +35,16 @@ interface ArticlePersonalInfosDao : BaseDao<ArticlePersonalInfo> {
     suspend fun toggleBookmark(articleId: String): Int
 
     @Transaction
-    suspend fun toggleBookmarkOrInsert(articleId: String){
+    suspend fun toggleBookmarkOrInsert(articleId: String) : Boolean{
         if(toggleBookmark(articleId)==0) insert(ArticlePersonalInfo(articleId = articleId, isBookmark = true))
+        return isBookmarked(articleId)
     }
+
+    @Query("""
+        SELECT is_bookmark FROM article_personal_infos 
+        WHERE article_id = :articleId
+    """)
+    suspend fun isBookmarked(articleId: String): Boolean
 
     @Transaction
     suspend fun toggleLikeOrInsert(articleId: String){

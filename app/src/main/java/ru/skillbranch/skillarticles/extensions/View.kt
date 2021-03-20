@@ -19,7 +19,9 @@ fun View.setMarginOptionally(
     right: Int = marginRight,
     bottom: Int = marginBottom
 ) {
-    (this.layoutParams as ViewGroup.MarginLayoutParams).setMargins(left, top, right, bottom)
+    val lp = layoutParams as? ViewGroup.MarginLayoutParams ?: return
+    lp.setMargins(left, top, right, bottom)
+    layoutParams = lp
 }
 
 fun View.setPaddingOptionally(

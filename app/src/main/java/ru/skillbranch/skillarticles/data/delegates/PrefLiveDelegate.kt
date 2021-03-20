@@ -6,6 +6,7 @@ package ru.skillbranch.skillarticles.data.delegates
 
 import android.content.SharedPreferences
 import androidx.lifecycle.LiveData
+import com.squareup.moshi.JsonAdapter
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
@@ -23,10 +24,26 @@ class PrefLiveDelegate<T> (
     }
 }
 
+class PrefLiveObjDelegate<T>(
+    private val fieldKey: String,
+    private val adapter: JsonAdapter<T?>,
+    private val preferences: SharedPreferences
+) : ReadOnlyProperty<Any?, LiveData<T?>> {
+    private var storedValue: LiveData<T?>? = null
+
+    override fun getValue(thisRef: Any?, property: KProperty<*>): LiveData<T?> {
+        if (storedValue == null) {
+            storedValue = SharedPreferencesLiveData(preferences, fieldKey, null, adapter)
+        }
+        return storedValue!!
+    }
+}
+
 internal class SharedPreferencesLiveData<T>(
     var sharedPreferences: SharedPreferences,
     var key: String,
-    var defaultValue: T
+    var defaultValue: T? = null,
+    val adapter: JsonAdapter<T>? = null
 ): LiveData<T>() {
     private val preferencesChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, shKey ->
         if(shKey == key){
@@ -45,14 +62,17 @@ internal class SharedPreferencesLiveData<T>(
         super.onInactive()
     }
 
-    private fun readValue(defaultValue: T) : T {
+    private fun readValue(defaultValue: T?) : T? {
         return when(defaultValue){
             is Int -> sharedPreferences.getInt(key, defaultValue as Int) as T
             is Long -> sharedPreferences.getLong(key, defaultValue as Long) as T
             is Float -> sharedPreferences.getFloat(key, defaultValue as Float) as T
             is String -> sharedPreferences.getString(key, defaultValue as String) as T
             is Boolean -> sharedPreferences.getBoolean(key, defaultValue as Boolean) as T
+            null -> sharedPreferences.getString(key, null)?.let { adapter?.fromJson(it) }
             else -> error("This type $defaultValue can not be stored into Preferences")
         }
     }
 }
+
+
