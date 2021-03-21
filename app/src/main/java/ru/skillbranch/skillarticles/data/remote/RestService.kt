@@ -53,5 +53,16 @@ interface RestService {
         @Header("Authorization") token: String
     ): LikeRes
 
+    @POST("articles/{article}/addBookmark")
+    suspend fun addBookmark(
+        @Path("article") articleId: String,
+        @Header("Authorization") token: String
+    ): BookmarkRes
+
+    @POST("articles/{article}/removeBookmark")
+    suspend fun removeBookmark(
+        @Path("article") articleId: String,
+        @Header("Authorization") token: String
+    ): BookmarkRes
 
 }

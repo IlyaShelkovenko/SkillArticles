@@ -11,6 +11,7 @@ import ru.skillbranch.skillarticles.data.local.entities.ArticleFull
 import ru.skillbranch.skillarticles.data.models.*
 import ru.skillbranch.skillarticles.data.remote.NetworkManager
 import ru.skillbranch.skillarticles.data.remote.RestService
+import ru.skillbranch.skillarticles.data.remote.err.NoNetworkError
 import ru.skillbranch.skillarticles.data.remote.req.MessageReq
 import ru.skillbranch.skillarticles.data.remote.res.CommentRes
 import ru.skillbranch.skillarticles.extensions.data.toArticleContent
@@ -19,8 +20,8 @@ import ru.skillbranch.skillarticles.extensions.data.toArticleContent
 interface IArticleRepository {
     fun findArticle(articleId: String): LiveData<ArticleFull>
     fun getAppSettings(): LiveData<AppSettings>
-    suspend fun toggleLike(articleId: String)
-    suspend fun toggleBookmark(articleId: String)
+    suspend fun toggleLike(articleId: String): Boolean
+    suspend fun toggleBookmark(articleId: String): Boolean
     fun isAuth(): MutableLiveData<Boolean>
     suspend fun sendMessage(articleId: String, text: String, answerToSlug: String?)
     fun loadAllComments(articleId: String, totalCount: Int, errHandler: (Throwable) -> Unit): CommentsDataFactory
@@ -58,12 +59,12 @@ object ArticleRepository : IArticleRepository{
 
     override fun getAppSettings(): LiveData<AppSettings> = preferences.appSettings //from preferences
 
-    override suspend fun toggleLike(articleId: String) {
-        articlesPersonalDao.toggleLikeOrInsert(articleId)
+    override suspend fun toggleLike(articleId: String): Boolean {
+        return articlesPersonalDao.toggleLikeOrInsert(articleId)
     }
 
-    override suspend fun toggleBookmark(articleId: String) {
-        articlesPersonalDao.toggleBookmarkOrInsert(articleId)
+    override suspend fun toggleBookmark(articleId: String): Boolean {
+        return articlesPersonalDao.toggleBookmarkOrInsert(articleId)
     }
 
     override fun updateSettings(appSettings: AppSettings) {
@@ -100,13 +101,16 @@ object ArticleRepository : IArticleRepository{
             val res = network.decrementLike(articleId, preferences.accessToken)
             articleCountsDao.updateLike(articleId, res.likeCount)
         } catch (e : Throwable){
-            articleCountsDao.decrementLike(articleId)
+            if (e is NoNetworkError) {
+                articleCountsDao.decrementLike(articleId)
+                return
+            }
             throw e
         }
     }
 
     override suspend fun incrementLike(articleId: String) {
-        if(preferences.accessToken.isEmpty()) {
+        if (preferences.accessToken.isEmpty()) {
             articleCountsDao.incrementLike(articleId)
             return
         }
@@ -114,11 +118,16 @@ object ArticleRepository : IArticleRepository{
         try {
             val res = network.incrementLike(articleId, preferences.accessToken)
             articleCountsDao.updateLike(articleId, res.likeCount)
-        } catch (e : Throwable){
-            articleCountsDao.incrementLike(articleId)
+        } catch (e: Throwable) {
+            if (e is NoNetworkError) {
+                articleCountsDao.incrementLike(articleId)
+                return
+            }
             throw e
         }
+
     }
+
 
     override suspend fun sendMessage(articleId: String, message: String, answerToMessageId: String?) {
         val (_, messageCount) = network.sendMessage(articleId, MessageReq(message,answerToMessageId), preferences.accessToken)
@@ -128,6 +137,28 @@ object ArticleRepository : IArticleRepository{
     suspend fun refreshCommentsCount(articleId: String) {
         val counts = network.loadArticleCounts(articleId)
         articleCountsDao.updateCommentsCount(articleId, counts.comments)
+    }
+
+    suspend fun addBookmark(articleId: String) {
+        if (preferences.accessToken.isEmpty()) return
+
+        try {
+            network.addBookmark(articleId, preferences.accessToken)
+        } catch (e: Throwable) {
+            if (e is NoNetworkError) return
+            throw e
+        }
+    }
+
+    suspend fun removeBookmark(articleId: String){
+        if (preferences.accessToken.isEmpty()) return
+
+        try {
+            network.removeBookmark(articleId, preferences.accessToken)
+        } catch (e: Throwable) {
+            if (e is NoNetworkError) return
+            throw e
+        }
     }
 }
 

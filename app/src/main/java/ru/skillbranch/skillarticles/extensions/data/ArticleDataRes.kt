@@ -19,13 +19,13 @@ fun ArticleDataRes.toArticle(): Article = Article(
     updatedAt = Date()
 )
 
-fun AuthorRes.toAuthor(): Author = Author(
+fun AuthorRes.toAuthor() : Author = Author(
     userId = id,
     avatar = avatar,
     name = name
 )
 
-fun CategoryRes.toCategory(): Category = Category(
+fun CategoryRes.toCategory() : Category = Category(
     categoryId = id,
     title = title,
     icon = icon

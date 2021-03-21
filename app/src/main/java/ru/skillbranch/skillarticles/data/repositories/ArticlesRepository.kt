@@ -23,7 +23,7 @@ interface IArticlesRepository {
     fun findCategoriesData(): LiveData<List<CategoryData>>
     fun rawQueryArticles(filter: ArticleFilter): DataSource.Factory<Int, ArticleItem>
     suspend fun incrementTagUseCount(tag: String)
-
+    suspend fun removeArticleContent(articleId: String)
 }
 
 object ArticlesRepository : IArticlesRepository {
@@ -42,13 +42,15 @@ object ArticlesRepository : IArticlesRepository {
         articleCountsDao: ArticleCountsDao,
         categoriesDao: CategoriesDao,
         tagsDao: TagsDao,
-        articlePersonalDao: ArticlePersonalInfosDao
+        articlePersonalDao: ArticlePersonalInfosDao,
+        articleContentsDao: ArticleContentsDao
     ){
         this.articlesDao = articlesDao
         this.articleCountsDao = articleCountsDao
         this.categoriesDao = categoriesDao
         this.tagsDao = tagsDao
         this.articlePersonalDao = articlePersonalDao
+        this.articlesContentDao = articleContentsDao
 
     }
 
@@ -104,6 +106,10 @@ object ArticlesRepository : IArticlesRepository {
         articlesContentDao.insert(content.toArticleContent())
     }
 
+    override suspend fun removeArticleContent(articleId: String) {
+        articlesContentDao.delete(articleId)
+    }
+
 }
 
 data class ArticleFilter(
@@ -122,7 +128,7 @@ data class ArticleFilter(
             qb.appendWhere("refs.t_id = '$search'")
         }
         if (isBookmark) qb.appendWhere("is_bookmark = 1")
-        if(categories.isNotEmpty()) qb.appendWhere("category_id IN (${categories.joinToString(",")})")
+        if(categories.isNotEmpty()) qb.appendWhere("category_id IN ('${categories.joinToString(",")}')")
         qb.orderBy("date")
         return qb.build()
     }

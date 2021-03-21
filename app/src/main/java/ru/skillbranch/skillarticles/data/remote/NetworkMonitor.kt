@@ -5,6 +5,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.MutableLiveData
 
 object NetworkMonitor {
@@ -50,6 +51,11 @@ object NetworkMonitor {
         networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> NetworkType.WIFI
         networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> NetworkType.CELLULAR
         else -> NetworkType.UNKNOWN
+    }
+
+    @VisibleForTesting(otherwise = VisibleForTesting.NONE)
+    fun setNetworkIsConnected(isConnected: Boolean = true) {
+        this.isConnected = isConnected
     }
 }
 
