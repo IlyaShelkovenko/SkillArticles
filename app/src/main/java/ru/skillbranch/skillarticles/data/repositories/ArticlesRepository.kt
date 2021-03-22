@@ -31,7 +31,7 @@ object ArticlesRepository : IArticlesRepository {
     private val network = NetworkManager.api
     private var articlesDao = db.articlesDao()
     private var articleCountsDao = db.articleCountsDao()
-    private var articleContentsDao = db.articleContentsDao()
+    private var articlesContentDao = db.articleContentsDao()
     private var categoriesDao = db.categoriesDao()
     private var tagsDao = db.tagsDao()
     private var articlePersonalDao = db.articlePersonalInfosDao()
@@ -43,14 +43,14 @@ object ArticlesRepository : IArticlesRepository {
         categoriesDao: CategoriesDao,
         tagsDao: TagsDao,
         articlePersonalDao: ArticlePersonalInfosDao,
-        articleContentsDao: ArticleContentsDao
+        articlesContentDao: ArticleContentsDao
     ){
         this.articlesDao = articlesDao
         this.articleCountsDao = articleCountsDao
         this.categoriesDao = categoriesDao
         this.tagsDao = tagsDao
         this.articlePersonalDao = articlePersonalDao
-        this.articleContentsDao = articleContentsDao
+        this.articlesContentDao = articlesContentDao
 
     }
 
@@ -103,11 +103,11 @@ object ArticlesRepository : IArticlesRepository {
 
     suspend fun fetchArticleContent(articleId: String) {
         val content = network.loadArticleContent(articleId)
-        articleContentsDao.insert(content.toArticleContent())
+        articlesContentDao.insert(content.toArticleContent())
     }
 
     override suspend fun removeArticleContent(articleId: String) {
-        articleContentsDao.delete(articleId)
+        articlesContentDao.delete(articleId)
     }
 
 }
