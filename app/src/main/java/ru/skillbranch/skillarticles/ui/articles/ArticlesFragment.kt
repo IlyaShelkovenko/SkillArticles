@@ -4,8 +4,10 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.os.Bundle
 import android.provider.BaseColumns
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.AutoCompleteTextView
 
 import androidx.appcompat.widget.SearchView
@@ -38,6 +40,7 @@ class ArticlesFragment : BaseFragment<ArticlesViewModel>() {
     override val binding: ArticlesBinding by lazy { ArticlesBinding() }
     private val args: ArticlesFragmentArgs by navArgs()
     private lateinit var suggestionsAdapter: SimpleCursorAdapter
+
 
     override val prepareToolbar: (ToolbarBuilder.() -> Unit)? = {
         addMenuItem(

@@ -1,6 +1,7 @@
 package ru.skillbranch.skillarticles.ui
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.viewModels
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
@@ -33,7 +34,6 @@ class RootActivity : BaseActivity<RootViewModel>() {
                 R.id.nav_profile
             )
         )
-
         setupActionBarWithNavController(navController, appbarConfiguration)
         //nav_view.setupWithNavController(navController)
         nav_view.setOnNavigationItemSelectedListener {
@@ -44,11 +44,19 @@ class RootActivity : BaseActivity<RootViewModel>() {
         navController.addOnDestinationChangedListener { controller, destination, arguments ->
             nav_view.selectDestination(destination)
 
-            if (isAuth && destination.id == R.id.nav_auth) {
+            /*if (isAuth && destination.id == R.id.nav_auth) {
                 controller.popBackStack()
                 val privateDestination = arguments?.get("private_destination") as Int?
                 privateDestination?.let { controller.navigate(it) }
+            }*/
+
+
+            if (destination.id == R.id.nav_auth && isAuth) {
+                controller.popBackStack()
+                if (arguments != null && arguments["private_destination"] != null)
+                    viewModel.navigate(NavigationCommand.To(arguments["private_destination"] as Int))
             }
+
         }
 
 

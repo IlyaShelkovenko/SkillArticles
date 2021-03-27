@@ -22,7 +22,7 @@ interface IArticleRepository {
     fun getAppSettings(): LiveData<AppSettings>
     suspend fun toggleLike(articleId: String): Boolean
     suspend fun toggleBookmark(articleId: String): Boolean
-    fun isAuth(): MutableLiveData<Boolean>
+    fun isAuth(): LiveData<Boolean>
     suspend fun sendMessage(articleId: String, text: String, answerToSlug: String?)
     fun loadAllComments(articleId: String, totalCount: Int, errHandler: (Throwable) -> Unit): CommentsDataFactory
     suspend fun decrementLike(articleId: String)
@@ -80,7 +80,7 @@ object ArticleRepository : IArticleRepository{
         return articleCountsDao.getCommentsCount(articleId)
     }
 
-    override fun isAuth(): MutableLiveData<Boolean> = preferences.isAuth()
+    override fun isAuth(): LiveData<Boolean> = preferences.isAuthLive
 
     override fun loadAllComments(articleId: String, totalCount: Int, errHandler: (Throwable) -> Unit) = CommentsDataFactory(
         itemProvider = network,

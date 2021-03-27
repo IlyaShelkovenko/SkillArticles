@@ -38,7 +38,7 @@ object PrefManager {
 
     val appSettings: LiveData<AppSettings> = MediatorLiveData<AppSettings>().apply {
         val isDarkModeLive: LiveData<Boolean> by PrefLiveDelegate("isDarkMode", false, preferences)
-        val isBigTextLive: LiveData<Boolean> by PrefLiveDelegate("isDarkMode", false, preferences)
+        val isBigTextLive: LiveData<Boolean> by PrefLiveDelegate("isBigText", false, preferences)
         value = AppSettings()
 
         addSource(isDarkModeLive){
@@ -60,12 +60,4 @@ object PrefManager {
         isBigText = appSettings.isBigText
     }
 
-    fun isAuth(): MutableLiveData<Boolean> {
-        //TODO implement me
-        return MutableLiveData(false)
-    }
-
-    fun setAuth(auth: Boolean): Unit {
-        // TODO implement me
-    }
 }

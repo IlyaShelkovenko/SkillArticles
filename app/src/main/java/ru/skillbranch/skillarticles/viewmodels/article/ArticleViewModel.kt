@@ -50,7 +50,9 @@ class ArticleViewModel(
                 isBookmark = article.isBookmark,
                 isLike = article.isLike,
                 content = article.content ?: emptyList(),
-                isLoadingContent = article.content == null
+                isLoadingContent = article.content == null,
+                source = article.source,
+                hashtags = article.tags
             )
         }
 
@@ -245,11 +247,13 @@ data class ArticleState(
     val author: Any? = null,
     val poster: String? = null,
     val content: List<MarkdownElement> = emptyList(),
-    val comment: String? = null,
     val commentsCount: Int = 0,
     val answerTo: String? = null,
     val answerToMessageId: String? = null,
-    val showBottomBar: Boolean = true
+    val showBottomBar: Boolean = true,
+    val comment: String? = null,
+    val source: String? = null,
+    val hashtags: List<String> = emptyList()
 ) : IViewModelState {
 
     override fun save(outState: SavedStateHandle) {
@@ -259,7 +263,7 @@ data class ArticleState(
         outState.set("searchPosition", searchPosition)
         outState.set("comment", comment)
         outState.set("answerTo", answerTo)
-        outState.set("answerToSlug", answerToMessageId)
+        outState.set("answerToMessageId", answerToMessageId)
 
     }
 
@@ -271,7 +275,7 @@ data class ArticleState(
             searchPosition = savedState["searchPosition"] ?: 0,
             comment = savedState["comment"],
             answerTo = savedState["answerTo"],
-            answerToMessageId = savedState["answerToSlug"]
+            answerToMessageId = savedState["answerToMessageId"]
         )
     }
 }
